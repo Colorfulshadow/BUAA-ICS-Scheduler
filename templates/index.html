@@ -6,96 +6,140 @@
     <title>ICS Link Generator</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f7f7f7;
+            font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            background-color: #f5f5f7;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
+            padding: 0;
+            color: #333;
         }
         .container {
             background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            max-width: 360px;
             width: 100%;
+            text-align: left;
+            box-sizing: border-box;
         }
         h1 {
+            font-size: 24px;
+            color: #1d1d1f;
+            margin-bottom: 30px;
             text-align: center;
-            color: #333;
         }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         label {
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-weight: 600;
             display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
         }
         input[type="text"], input[type="password"], input[type="number"] {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            padding: 12px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            background-color: #f9f9fa;
+            font-size: 16px;
+            color: #333;
             box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus {
+            border-color: #0071e3;
+            outline: none;
         }
         .btn {
             width: 100%;
-            padding: 10px;
-            background-color: #007BFF;
+            padding: 12px;
+            background-color: #0071e3;
             color: white;
             border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            border-radius: 8px;
             font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
         }
         .btn:hover {
-            background-color: #0056b3;
+            background-color: #005bb5;
         }
         .generated-link {
-            margin-top: 20px;
+            margin-top: 30px;
+            word-wrap: break-word;
             text-align: center;
         }
+        .generated-link h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
         a {
-            color: #007BFF;
+            color: #0071e3;
             text-decoration: none;
             word-wrap: break-word;
         }
         a:hover {
             text-decoration: underline;
         }
+        footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px 0;
+        }
+        .footer-link {
+            color: #0071e3;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .footer-link:hover {
+            color: #005bb5;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>ICS Link Generator</h1>
+    <h1>北航课表订阅</h1>
     <form action="/generate_link" method="POST">
         <div class="form-group">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" placeholder="Enter your username" required>
+            <label for="username">学号:</label>
+            <input type="text" id="username" name="username" placeholder="例：21374444" required>
         </div>
         <div class="form-group">
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            <label for="password">密码:</label>
+            <input type="password" id="password" name="password" placeholder="你的密码" required>
         </div>
         <div class="form-group">
-            <label for="trigger">Trigger (minutes):</label>
-            <input type="number" id="trigger" name="trigger" placeholder="Reminder in minutes" value="30">
+            <label for="trigger">提前提醒时间 (分钟):</label>
+            <input type="number" id="trigger" name="trigger" placeholder="30" value="30">
         </div>
-        <button type="submit" class="btn">Generate Link</button>
+        <button type="submit" class="btn">生成链接</button>
     </form>
 
     <!-- 显示生成的链接 -->
     {% if generated_link %}
     <div class="generated-link">
-        <h3>Generated Link:</h3>
+        <h3>你的专属订阅链接:</h3>
         <a href="{{ generated_link }}" target="_blank">{{ generated_link }}</a>
     </div>
     {% endif %}
 </div>
+
+<footer>
+    &copy; 2024 <a href="https://github.com/Colorfulshadow/BUAA-ICS-Scheduler" target="_blank" class="footer-link">北航课表订阅</a>. 由张添翼制作，基于 GNU General Public License Version 3 授权发布。
+</footer>
 
 </body>
 </html>
