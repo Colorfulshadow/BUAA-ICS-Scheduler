@@ -167,9 +167,6 @@ END:VTIMEZONE"""
         start_time = klass["start"].ljust(6, "0")  # 确保是 6 位，HHMMSS
         end_time = klass["end"].ljust(6, "0")      # 确保是 6 位，HHMMSS
 
-        print(start_time)
-        print(end_time)
-
         event_start = f'{klass["date"]}T{start_time}'
         event_end = f'{klass["date"]}T{end_time}'
 
