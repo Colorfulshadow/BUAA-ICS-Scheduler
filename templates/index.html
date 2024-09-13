@@ -89,6 +89,23 @@
         a:hover {
             text-decoration: underline;
         }
+        .reminder {
+            margin-top: 20px;
+            padding: 12px;
+            background-color: #ffeeba;
+            border: 1px solid #ffeeba;
+            border-radius: 8px;
+            color: #856404;
+            text-align: center;
+            font-size: 14px;
+        }
+        .loading-message {
+            display: none; /* 初始隐藏 */
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+        }
         footer {
             margin-top: 20px;
             font-size: 12px;
@@ -107,12 +124,45 @@
             color: #005bb5;
         }
     </style>
+    <script>
+function submitForm(event) {
+    event.preventDefault(); // 阻止表单默认提交行为
+
+    // 显示“请稍候”消息
+    document.getElementById('loading-message').style.display = 'block';
+
+    // 使用 Ajax 提交表单数据
+    var form = event.target;
+    var formData = new FormData(form);
+
+    fetch('/generate_link', {
+        method: 'POST',
+        body: formData
+    }).then(response => {
+        if (!response.ok) {
+            return response.json().then(data => { throw new Error(data.error); });
+        }
+        return response.json();
+    }).then(data => {
+        document.getElementById('loading-message').style.display = 'none'; // 隐藏“请稍候”
+        if (data.generated_link) {
+            // 显示生成的链接
+            document.getElementById('generated-link').innerHTML = '<h3>你的专属订阅链接:</h3><a href="' + data.generated_link + '" target="_blank">' + data.generated_link + '</a>';
+        }
+    }).catch(error => {
+        document.getElementById('loading-message').style.display = 'none'; // 隐藏“请稍候”
+        // 显示错误信息
+        document.getElementById('generated-link').innerHTML = '<h3>错误:</h3><p>' + error.message + '</p>';
+    });
+}
+
+    </script>
 </head>
 <body>
 
 <div class="container">
     <h1>北航课表订阅</h1>
-    <form action="/generate_link" method="POST">
+    <form onsubmit="submitForm(event)">
         <div class="form-group">
             <label for="username">学号:</label>
             <input type="text" id="username" name="username" placeholder="例：21374444" required>
@@ -128,13 +178,13 @@
         <button type="submit" class="btn">生成链接</button>
     </form>
 
-    <!-- 显示生成的链接 -->
-    {% if generated_link %}
-    <div class="generated-link">
-        <h3>你的专属订阅链接:</h3>
-        <a href="{{ generated_link }}" target="_blank">{{ generated_link }}</a>
+    <!-- 显示“请稍候”消息 -->
+    <div id="loading-message" class="loading-message">
+        正在生成链接，请稍候...
     </div>
-    {% endif %}
+
+    <!-- 显示生成的链接 -->
+    <div id="generated-link" class="generated-link"></div>
 </div>
 
 <footer>

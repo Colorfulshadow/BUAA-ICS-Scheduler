@@ -3,8 +3,9 @@
 @Date: 2024/9/13
 @Description:
 """
-from flask import Flask, request, send_file, render_template, redirect, url_for, send_from_directory
+from flask import Flask, request, send_file, render_template, redirect, url_for, send_from_directory, jsonify
 from urllib.parse import quote, unquote
+
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
@@ -173,10 +174,20 @@ END:VEVENT"""
 
     return ics_payload
 
+def current_date_str():
+    return datetime.now().strftime("%Y-%m-%d")
+
+# Helper function to check if file is less than 7 days old
+def is_file_recent(filename):
+    if os.path.exists(filename):
+        file_time = datetime.fromtimestamp(os.path.getmtime(filename))
+        return (datetime.now() - file_time).days <= 7
+    return False
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/seed', methods=['GET'])
 def seed():
@@ -189,16 +200,47 @@ def seed():
     if not username or not password:
         return "Missing username or password", 400
 
+    # Define the ics filename based on the username and date
+    ics_filename = f"{username}_{current_date_str()}.ics"
+    # Check if the ICS file exists and is recent (within 7 days)
+    if is_file_recent(ics_filename):
+        return send_file(ics_filename, as_attachment=True)
+    else:
+        # If the file doesn't exist or is too old, redirect to /generate_link to regenerate
+        return redirect(url_for('generate_link', username=username, password=encoded_password, trigger=trigger))
+
+
+# Handle form input and generate link
+@app.route('/generate_link', methods=['POST', 'GET'])
+def generate_link():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        trigger = request.form.get('trigger', '30')
+    else:
+        username = request.args.get('username')
+        password = request.args.get('password')
+        trigger = request.args.get('trigger', '30')
+
+    # 将密码和其他输入URL编码
+    encoded_password = quote(password)
+
+    # Define the ics filename based on the username and current date
+    ics_filename = f"{username}_{current_date_str()}.ics"
+    config_filename = f"{username}.config"
+
     # Step 1: Verify login and get session
     eai_sess = verify_eai_sess(username, password)
     if not eai_sess:
-        return "Login failed", 401
+        reminder_message = "登陆失败,请检查您的学号和密码"
+        return jsonify({'error': '登陆失败，请检查您的学号和密码'}), 401
 
     # Step 2: Get current academic year and term
     year = datetime.now().year
     month = datetime.now().month
     year_str = f"{year - 1}-{year}" if month < 7 else f"{year}-{year + 1}"
     term_str = "2" if month < 7 else "1"
+
 
     # Step 3: Collect class data for each week
     weekly_classes = []
@@ -208,35 +250,21 @@ def seed():
 
     # Step 4: Generate the ICS file
     ics_content = generate_ics(f"北航 {year_str} 第 {term_str} 学期课程表", weekly_classes, trigger)
-    ics_filename = f"{username}.ics"
-    config_filename = f"{username}.config"
 
-    # Step 5: Save the files
+    # Step 5: Save the ICS file
     with open(ics_filename, 'w+', encoding='utf-8') as ics_file:
         ics_file.write(ics_content)
+
+    # Step 6: Save the config file
     with open(config_filename, 'w+', encoding='utf-8') as config_file:
         config_file.write(f"username={username}\npassword={password}\ntrigger={trigger}\n")
 
-    # Step 6: Return the ICS file as a download
-    return send_file(ics_filename, as_attachment=True)
-
-# 处理表单输入，生成链接
-@app.route('/generate_link', methods=['POST'])
-def generate_link():
-    username = request.form.get('username')
-    password = request.form.get('password')
-    trigger = request.form.get('trigger', '30')
-
-    # 将密码和其他输入URL编码
-    from urllib.parse import quote
-    encoded_password = quote(password)
-
+    # Step 7: Construct the generated link
     domain = request.host
-
-    # 构造生成的URL
     generated_link = f"https://{domain}/seed?username={username}&password={encoded_password}&trigger={trigger}"
 
-    return render_template('index.html', generated_link=generated_link)
+    # Return the generated link to the user
+    return jsonify({'generated_link': generated_link})
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
