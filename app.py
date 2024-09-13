@@ -285,7 +285,7 @@ def generate_link():
 
     # Step 6: Save the config file
     with open(config_filename, 'w+', encoding='utf-8') as config_file:
-        config_file.write(f"username={username}\npassword={password}\ntrigger={trigger}\n")
+        config_file.write(f"username={username}\ntrigger={trigger}\n")
 
     # Step 7: Construct the generated link
     domain = request.host
