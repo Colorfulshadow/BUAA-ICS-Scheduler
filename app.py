@@ -234,7 +234,7 @@ def generate_link():
     domain = request.host
 
     # 构造生成的URL
-    generated_link = f"http://{domain}/seed?username={username}&password={encoded_password}&trigger={trigger}"
+    generated_link = f"https://{domain}/seed?username={username}&password={encoded_password}&trigger={trigger}"
 
     return render_template('index.html', generated_link=generated_link)
 
