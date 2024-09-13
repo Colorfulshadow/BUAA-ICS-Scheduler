@@ -88,6 +88,7 @@ def get_public_ip():
     except Exception as e:
         return "127.0.0.1"
 
+
 def get_class_by_week(year: str, term: str, week: str, eai_sess: str) -> list[dict]:
     class_url = "https://app.buaa.edu.cn/timetable/wap/default/get-datatmp"
     header = {
@@ -100,25 +101,47 @@ def get_class_by_week(year: str, term: str, week: str, eai_sess: str) -> list[di
         "type": "1",
     }
 
+    # 发送请求并处理响应
     r = requests.post(class_url, data=data, headers=header)
-    print(r.content)
-    days = r.json()["d"]["weekdays"]
-    classes = r.json()["d"]["classes"]
-    classes = merge_adjacent_classes(sorted(classes, key=lambda klass: int(klass["weekday"]) * 100 + int(klass["lessons"][0:1])))
+    if r.status_code != 200:
+        print(f"Error: Unable to fetch data, status code {r.status_code}")
+        return []
+
+    response_json = r.json()
+
+    if "d" not in response_json or "weekdays" not in response_json["d"] or "classes" not in response_json["d"]:
+        print("Error: Invalid response structure")
+        return []
+
+    days = response_json["d"]["weekdays"]
+    classes = response_json["d"]["classes"]
+
+    # 按星期几和课程节次排序
+    classes = merge_adjacent_classes(sorted(
+        classes, key=lambda klass: int(klass["weekday"]) * 100 + int(klass["lessons"][0:1])
+    ))
 
     for klass in classes:
+        # 将日期处理为 YYYYMMDD 格式
         klass["date"] = days[int(klass["weekday"]) - 1].replace("-", "")
+
+        # 确保处理 course_time 字段并进行拆分
         if "course_time" in klass and klass["course_time"]:  # 确保字段存在且不为空
-            course_time_split = klass["course_time"].split("～")
+            course_time_split = klass["course_time"].split("-")
             klass["start"] = course_time_split[0].replace(":", "")
             if len(course_time_split) > 1:  # 检查是否有结束时间
                 klass["end"] = course_time_split[1].replace(":", "")
             else:
-                klass["end"] = klass["start"]  # 或根据需要设置一个默认或错误值
+                klass["end"] = klass["start"]  # 设置默认值，如果只有起始时间则结束时间等于起始时间
         else:
-            # 处理course_time字段不存在或为空的情况，例如设置默认值或记录错误
-            print('course_time not exists')
+            # 处理 course_time 字段不存在或为空的情况
+            print(f'Warning: course_time not exists for course {klass["course_name"]}')
+            klass["start"] = "000000"  # 默认开始时间，作为占位符
+            klass["end"] = "000000"  # 默认结束时间，作为占位符
+
+        # 格式化 lessons 字段
         klass["lessons"] = ", ".join([klass["lessons"][i:i + 2] for i in range(0, len(klass["lessons"]), 2)])
+
     return classes
 
 
@@ -140,9 +163,15 @@ END:STANDARD
 END:VTIMEZONE"""
 
     for klass in classes:
-        # 确保时间格式正确，补齐时间为6位 HHMMSS 格式
-        event_start = f'{klass["date"]}T{klass["start"].rjust(6, "0")}'
-        event_end = f'{klass["date"]}T{klass["end"].rjust(6, "0")}'
+        # 确保时间格式正确，补齐时间为 HHMMSS 格式
+        start_time = klass["start"].ljust(6, "0")  # 确保是 6 位，HHMMSS
+        end_time = klass["end"].ljust(6, "0")      # 确保是 6 位，HHMMSS
+
+        print(start_time)
+        print(end_time)
+
+        event_start = f'{klass["date"]}T{start_time}'
+        event_end = f'{klass["date"]}T{end_time}'
 
         # 替换多行文本中的换行符并进行转义
         event_description = f"""编号：{klass["course_id"]}
@@ -173,6 +202,7 @@ END:VEVENT"""
     ics_payload += "\nEND:VCALENDAR"
 
     return ics_payload
+
 
 
 def current_date_str():
