@@ -239,4 +239,4 @@ def generate_link():
     return render_template('index.html', generated_link=generated_link)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
