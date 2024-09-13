@@ -140,9 +140,9 @@ END:STANDARD
 END:VTIMEZONE"""
 
     for klass in classes:
-        # 处理时间格式，确保正确的时间格式并补全时间
-        event_start = f'{klass["date"]}T{klass["start"].rjust(4, "0")}00'
-        event_end = f'{klass["date"]}T{klass["end"].rjust(4, "0")}00'
+        # 确保时间格式正确，补齐时间为6位 HHMMSS 格式
+        event_start = f'{klass["date"]}T{klass["start"].rjust(6, "0")}'
+        event_end = f'{klass["date"]}T{klass["end"].rjust(6, "0")}'
 
         # 替换多行文本中的换行符并进行转义
         event_description = f"""编号：{klass["course_id"]}
@@ -173,6 +173,7 @@ END:VEVENT"""
     ics_payload += "\nEND:VCALENDAR"
 
     return ics_payload
+
 
 def current_date_str():
     return datetime.now().strftime("%Y-%m-%d")
