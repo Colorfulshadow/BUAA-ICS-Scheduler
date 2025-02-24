@@ -73,8 +73,7 @@ def merge_adjacent_classes(classes):
     while i < len(classes):
         if classes[i]["course_name"] == classes[i - 1]["course_name"]:
             classes[i - 1]["lessons"] += f'{classes[i]["lessons"]}'
-            classes[i - 1][
-                "course_time"] = f'{classes[i - 1]["course_time"].split("～")[0]}～{classes[i]["course_time"].split("～")[1]}'
+            classes[i - 1]["course_time"] = f'{classes[i - 1]["course_time"].split("-")[0]}-{classes[i]["course_time"].split("-")[1]}'
             classes.pop(i)
         else:
             i += 1
@@ -103,6 +102,7 @@ def get_class_by_week(year: str, term: str, week: str, eai_sess: str) -> list[di
 
     # 发送请求并处理响应
     r = requests.post(class_url, data=data, headers=header)
+    print(r.text)
     if r.status_code != 200:
         print(f"Error: Unable to fetch data, status code {r.status_code}")
         return []
